@@ -28,7 +28,10 @@ desktop/
 # Go 相关
 *.test
 *.out
-vendor/
+/vendor/
+
+# 但允许前端 vendor 目录
+!frontend/vendor/
 
 # 配置文件（包含敏感信息）
 config.yaml
