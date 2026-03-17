@@ -199,6 +199,69 @@ GOOS=windows GOARCH=amd64 go build -o claude-server-windows-amd64.exe main.go
 
 ## 📦 部署指南
 
+### Docker Compose 部署（推荐）
+
+使用 Docker Compose 是最简单的部署方式，无需手动安装 Go 环境和依赖。
+
+**快速启动**：
+
+```bash
+# 克隆仓库
+git clone https://github.com/kkddytd/claude-api.git
+cd claude-api
+
+# 启动服务
+docker-compose up -d
+
+# 查看日志
+docker-compose logs -f
+
+# 停止服务
+docker-compose down
+```
+
+**首次使用**：
+1. 访问控制台：`http://localhost:62311`
+2. 默认密码：`admin`（首次登录后请立即修改）
+3. 添加 AWS Kiro 账号并开始使用
+
+**数据持久化**：
+- 数据库文件自动保存在 `./data/data.sqlite3`
+- 停止容器后数据不会丢失
+
+**自定义配置**：
+
+```bash
+# 修改端口（编辑 docker-compose.yml）
+ports:
+  - "8080:62311"  # 将服务映射到 8080 端口
+
+# 使用自定义配置文件
+# 1. 创建 config.yaml
+# 2. docker-compose.yml 已自动挂载配置文件
+```
+
+**更新服务**：
+
+```bash
+# 拉取最新代码
+git pull
+
+# 重新构建并启动
+docker-compose up -d --build
+```
+
+**使用预构建镜像**（即将支持）：
+
+```bash
+# 直接使用 Docker Hub 镜像（无需构建）
+docker run -d \
+  --name claude-api \
+  -p 62311:62311 \
+  -v $(pwd)/data:/app/data \
+  kkddytd/claude-api:latest
+```
+
 ### Linux Systemd 服务
 
 创建服务文件 `/etc/systemd/system/claude-api.service`：

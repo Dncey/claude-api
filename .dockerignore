@@ -1,0 +1,58 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# 构建产物
+dist/
+*.tar.gz
+*.zip
+claude-server
+claude-server-*
+
+# 数据文件
+data/
+*.sqlite3
+*.db
+
+# 配置文件（保留示例）
+config.yaml
+
+# 日志
+*.log
+
+# 临时文件
+*.tmp
+*.swp
+*.swo
+*~
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# 缓存
+.build-cache/
+.claude/
+
+# 测试
+test/
+*.test
+
+# 文档和展示
+README.md
+CHANGELOG.md
+DIRECTORIES.md
+PROJECT_STRUCTURE.md
+展示图/
+*.png
+*.jpg
+*.gif
+
+# 脚本（保留必要的）
+scripts/
+build.sh
+
+# 其他
+actual.json
