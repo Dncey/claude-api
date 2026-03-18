@@ -100,3 +100,9 @@ tools/license-verify-server/license-verify-server
 *.license
 licenses/
 activations/
+
+# 开发环境配置
+.air.toml
+Dockerfile.dev
+Dockerfile.dev.*
+docker-compose.dev.yml
