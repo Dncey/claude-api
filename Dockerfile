@@ -17,7 +17,7 @@ RUN go mod download
 COPY . .
 
 # 编译应用
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o claude-server main.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -mod=mod -ldflags="-w -s" -o claude-server main.go
 
 # 运行阶段
 FROM alpine:latest

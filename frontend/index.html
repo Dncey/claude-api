@@ -373,6 +373,9 @@ export ANTHROPIC_API_KEY=你的API密钥</code></pre>
                             <i class="btn-icon ri-key-2-line"></i> Token 导入
                         </button>
                         <input type="file" ref="tokenImportInput" accept=".json" style="display:none" @change="handleTokenImportFileChange">
+                        <button class="btn btn--secondary" @click="handleSyncEmails" :disabled="isSyncingEmails" data-tooltip="同步所有账号的邮箱信息">
+                            <i class="btn-icon ri-mail-check-line" :class="{'is-spinning': isSyncingEmails}"></i> 同步邮箱
+                        </button>
                         <button class="btn btn--secondary" @click="handleRefreshAllQuotas" :disabled="isRefreshingQuotas" data-tooltip="刷新所有启用账号的配额信息">
                             <i class="btn-icon ri-pie-chart-line" :class="{'is-spinning': isRefreshingQuotas}"></i> 刷新配额
                         </button>

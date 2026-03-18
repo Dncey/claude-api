@@ -14,10 +14,11 @@ func (Setting) TableName() string {
 
 // AccountSelectionMode 账号选择方式常量
 const (
-	AccountSelectionSequential     = "sequential"      // 顺序选择（默认）
-	AccountSelectionRandom         = "random"          // 随机选择
-	AccountSelectionWeightedRandom = "weighted_random" // 加权随机选择
-	AccountSelectionRoundRobin     = "round_robin"     // 轮询选择
+	AccountSelectionSequential        = "sequential"         // 顺序选择（默认）
+	AccountSelectionRandom            = "random"             // 随机选择
+	AccountSelectionWeightedRandom    = "weighted_random"    // 加权随机选择
+	AccountSelectionRoundRobin        = "round_robin"        // 轮询选择
+	AccountSelectionSequentialExhaust = "sequential_exhaust" // 顺序耗尽（用完一个再换下一个）
 )
 
 // SupportedAccountSelectionModes 支持的账号选择方式列表
@@ -26,6 +27,7 @@ var SupportedAccountSelectionModes = []map[string]string{
 	{"value": AccountSelectionRandom, "label": "随机选择", "description": "随机选择一个账号"},
 	{"value": AccountSelectionWeightedRandom, "label": "加权随机", "description": "根据配额剩余、使用时间等因素加权选择"},
 	{"value": AccountSelectionRoundRobin, "label": "轮询选择", "description": "顺序轮流使用每个账号"},
+	{"value": AccountSelectionSequentialExhaust, "label": "顺序耗尽", "description": "按顺序使用账号，用完一个配额再切换下一个"},
 }
 
 // Settings 表示系统配置（用于 API 响应）

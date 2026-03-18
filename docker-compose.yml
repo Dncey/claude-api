@@ -6,7 +6,7 @@ services:
     container_name: claude-api-server
     restart: unless-stopped
     ports:
-      - "62311:62311"
+      - "62312:62311"  # 宿主机 62312 映射到容器 62311
     volumes:
       # 持久化数据库文件（包含管理员密码、API Key 等系统设置）
       - ./data:/app/data

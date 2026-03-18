@@ -100,11 +100,15 @@ func (s *Server) handleAccountStatusByError(ctx context.Context, accountID strin
 		status = models.AccountStatusExhausted
 		reason = "配额用尽"
 	case "TEMPORARILY_SUSPENDED":
-		status = models.AccountStatusSuspended
-		reason = "账号被封控"
+		// 注意：配额查询 API 的 TEMPORARILY_SUSPENDED 不代表账号真的被封
+		// 可能只是该 API 对某些账号有限制，但账号本身可以正常使用
+		// 因此只记录警告日志，不更新账号状态
+		logger.Warn("账号 %s 配额查询受限 (TEMPORARILY_SUSPENDED)，但不影响正常使用 - 跳过状态更新", accountID)
+		return // 不更新状态
 	case "ACCESS_DENIED":
-		status = models.AccountStatusSuspended
-		reason = "访问被拒绝"
+		// 同样，ACCESS_DENIED 可能只是配额查询权限问题，不代表账号被封
+		logger.Warn("账号 %s 配额查询被拒绝 (ACCESS_DENIED)，但不影响正常使用 - 跳过状态更新", accountID)
+		return // 不更新状态
 	case "UNAUTHORIZED", "EXPIRED_TOKEN":
 		status = models.AccountStatusExpired
 		reason = "Token 已失效"

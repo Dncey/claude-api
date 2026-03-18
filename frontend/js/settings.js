@@ -626,7 +626,8 @@ export const settingsMixin = {
                 'sequential': '顺序选择',
                 'random': '随机选择',
                 'weighted_random': '加权随机',
-                'round_robin': '轮询选择'
+                'round_robin': '轮询选择',
+                'sequential_exhaust': '顺序耗尽'
             };
             return modeLabels[mode] || '顺序选择';
         }

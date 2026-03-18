@@ -230,10 +230,11 @@ func (db *DB) UpdateSettings(ctx context.Context, updates *models.SettingsUpdate
 			mode := *updates.AccountSelectionMode
 			// 验证模式是否有效
 			validModes := map[string]bool{
-				models.AccountSelectionSequential:     true,
-				models.AccountSelectionRandom:         true,
-				models.AccountSelectionWeightedRandom: true,
-				models.AccountSelectionRoundRobin:     true,
+				models.AccountSelectionSequential:        true,
+				models.AccountSelectionRandom:            true,
+				models.AccountSelectionWeightedRandom:    true,
+				models.AccountSelectionRoundRobin:        true,
+				models.AccountSelectionSequentialExhaust: true,
 			}
 			if !validModes[mode] {
 				mode = models.AccountSelectionSequential

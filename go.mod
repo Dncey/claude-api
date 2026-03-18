@@ -1,8 +1,6 @@
 module claude-api
 
-go 1.24.0
-
-toolchain go1.24.11
+go 1.23
 
 require (
 	github.com/dlclark/regexp2 v1.10.0

@@ -170,6 +170,10 @@ func (p *AccountPool) selectAccount(accounts []*models.Account, mode string) *mo
 		idx := atomic.AddUint32(&p.roundRobinIndex, 1) - 1
 		return accounts[idx%uint32(len(accounts))]
 
+	case models.AccountSelectionSequentialExhaust:
+		// 顺序耗尽：选择第一个配额未用尽的账号
+		return p.selectSequentialExhaust(accounts)
+
 	default: // sequential 或其他
 		// 顺序选择（返回第一个）
 		return accounts[0]
@@ -267,6 +271,35 @@ func (p *AccountPool) selectWeightedRandom(accounts []*models.Account) *models.A
 		}
 	}
 
+	return accounts[0]
+}
+
+// selectSequentialExhaust 顺序耗尽选择：选择第一个配额未用尽的账号
+// 逻辑：按创建时间顺序遍历，找到第一个配额未用尽的账号
+// 如果所有账号都用尽，返回第一个账号（作为降级处理）
+func (p *AccountPool) selectSequentialExhaust(accounts []*models.Account) *models.Account {
+	if len(accounts) == 0 {
+		return nil
+	}
+	if len(accounts) == 1 {
+		return accounts[0]
+	}
+
+	// 遍历账号，找到第一个配额未用尽的
+	for _, acc := range accounts {
+		if acc.UsageLimit > 0 {
+			// 有配额限制，检查是否还有剩余
+			if acc.UsageCurrent < acc.UsageLimit {
+				return acc
+			}
+		} else if acc.UsageLimit == 0 && acc.UsageCurrent == 0 {
+			// UsageLimit 为 0 且 UsageCurrent 为 0：未初始化或无配额限制，认为可用
+			return acc
+		}
+		// UsageLimit == 0 但 UsageCurrent > 0：可能是配额已清零，跳过此账号
+	}
+
+	// 如果所有账号都用尽了，返回第一个（降级处理）
 	return accounts[0]
 }
 
