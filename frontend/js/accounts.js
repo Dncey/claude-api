@@ -75,6 +75,8 @@ export const accountsMixin = {
             upgradeModalDescription: '解锁更多账号和完整功能',
             // 添加账号提示弹窗
             showAddAccountTipModal: false,
+            // AWS Start URL 配置
+            awsStartUrl: '',
             // Token 导入相关
             showTokenImportModal: false,
             tokenImportStatus: 'idle', // idle, importing, success, error
@@ -1243,6 +1245,9 @@ export const accountsMixin = {
         async proceedWithOAuth() {
             const label = `账号-${new Date().toLocaleString()}`;
             const enabled = true;
+            const awsStartUrl = this.awsStartUrl.trim() || null;
+
+            console.log('[OAuth] 开始授权流程，AWS Start URL:', awsStartUrl || '(使用默认值)');
 
             try {
                 this.showOAuthModal = true;
@@ -1251,7 +1256,8 @@ export const accountsMixin = {
                 this.oauthDescription = '正在准备授权流程...';
                 this.oauthStatusText = '初始化中...';
 
-                const data = await API.startOAuth(label, enabled);
+                const data = await API.startOAuth(label, enabled, awsStartUrl);
+                console.log('[OAuth] 收到授权响应:', data);
                 this.currentOAuthData = data;
                 this.oauthUrl = data.verificationUriComplete;
 

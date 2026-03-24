@@ -220,6 +220,9 @@ func (db *DB) UpdateAccount(ctx context.Context, id string, updates *models.Acco
 	if updates.MachineID != nil {
 		updateMap["machine_id"] = updates.MachineID
 	}
+	if updates.AWSStartURL != nil {
+		updateMap["aws_start_url"] = updates.AWSStartURL
+	}
 
 	if len(updateMap) == 0 {
 		logger.Debug("数据库: 更新账号无需更新 - ID: %s", id)

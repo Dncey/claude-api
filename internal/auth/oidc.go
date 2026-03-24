@@ -156,14 +156,23 @@ func (c *OIDCClient) RegisterClient(ctx context.Context, machineId string) (stri
 
 // DeviceAuthorize 启动设备授权流程
 // machineId: 设备标识，用于构建 User-Agent
+// startURL: AWS Start URL（如果为空则使用全局配置）
 // @author ygw
-func (c *OIDCClient) DeviceAuthorize(ctx context.Context, clientID, clientSecret, machineId string) (map[string]interface{}, error) {
+func (c *OIDCClient) DeviceAuthorize(ctx context.Context, clientID, clientSecret, machineId string, startURL string) (map[string]interface{}, error) {
 	logger.Info("OIDC: 开始设备授权流程 - ClientID: %s", clientID)
+
+	// 优先使用传入的 startURL，如果为空则使用全局配置，最后使用默认值
+	if startURL == "" {
+		startURL = c.cfg.AWSStartURL
+		if startURL == "" {
+			startURL = StartURL
+		}
+	}
 
 	payload := map[string]interface{}{
 		"clientId":     clientID,
 		"clientSecret": clientSecret,
-		"startUrl":     StartURL,
+		"startUrl":     startURL,
 	}
 
 	result, err := c.postJSON(ctx, DeviceAuthURL, payload, machineId)
@@ -174,7 +183,7 @@ func (c *OIDCClient) DeviceAuthorize(ctx context.Context, clientID, clientSecret
 
 	deviceCode, _ := result["deviceCode"].(string)
 	userCode, _ := result["userCode"].(string)
-	logger.Info("OIDC: 设备授权成功 - UserCode: %s, DeviceCode: %s", userCode, deviceCode[:8]+"...")
+	logger.Info("OIDC: 设备授权成功 - UserCode: %s, DeviceCode: %s, StartURL: %s", userCode, deviceCode[:8]+"...", startURL)
 
 	return result, nil
 }

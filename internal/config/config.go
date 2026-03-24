@@ -73,6 +73,7 @@ type Config struct {
 	LazyAccountPoolOrderDesc     bool
 	AccountSelectionMode         string // 账号选择方式: sequential, random, weighted_random, round_robin
 	CompressionEnabled           bool   // 是否启用上下文压缩
+	AWSStartURL                  string // AWS Identity Center Start URL (默认: https://view.awsapps.com/start)
 
 	// 调试和测试模式
 	Debug bool
@@ -118,6 +119,7 @@ func Load() *Config {
 		LazyAccountPoolOrderDesc:     false,
 		AccountSelectionMode:         "sequential",
 		CompressionEnabled:           false,
+		AWSStartURL:                  "https://view.awsapps.com/start",
 		Debug:                        false,
 		Test:                         false,
 	}
@@ -130,10 +132,11 @@ func (c *Config) GetMaxAccounts() int {
 
 // YAMLFileConfig YAML 配置文件结构
 type YAMLFileConfig struct {
-	Database DatabaseConfig `yaml:"database"`
-	Server   ServerConfig   `yaml:"server"`
-	Debug    bool           `yaml:"debug"`
-	Test     bool           `yaml:"test"`
+	Database    DatabaseConfig `yaml:"database"`
+	Server      ServerConfig   `yaml:"server"`
+	AWSStartURL string         `yaml:"aws_start_url"`
+	Debug       bool           `yaml:"debug"`
+	Test        bool           `yaml:"test"`
 }
 
 // FileConfig 配置文件结构（兼容旧 JSON 格式）
@@ -193,6 +196,9 @@ func LoadFromYAML(path string) (*Config, error) {
 	if yamlConfig.Server.Port != 0 {
 		cfg.Server.Port = yamlConfig.Server.Port
 		cfg.Port = yamlConfig.Server.Port
+	}
+	if yamlConfig.AWSStartURL != "" {
+		cfg.AWSStartURL = yamlConfig.AWSStartURL
 	}
 	cfg.Debug = yamlConfig.Debug
 	cfg.Test = yamlConfig.Test

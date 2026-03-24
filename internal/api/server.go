@@ -1,10 +1,6 @@
 package api
 
 import (
-	"context"
-	"encoding/json"
-	"fmt"
-	"net/http"
 	"claude-api/internal/amazonq"
 	"claude-api/internal/auth"
 	"claude-api/internal/compressor"
@@ -15,6 +11,10 @@ import (
 	"claude-api/internal/proxy"
 	"claude-api/internal/ratelimit"
 	syncpkg "claude-api/internal/sync"
+	"context"
+	"encoding/json"
+	"fmt"
+	"net/http"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -976,7 +976,8 @@ type AuthSession struct {
 	Status                  string
 	Error                   *string
 	AccountID               *string
-	MachineID               string // Kiro 设备标识
+	MachineID               string  // Kiro 设备标识
+	AWSStartURL             *string // AWS Start URL（登录时指定）
 }
 
 func (s *Server) requireAdmin(c *gin.Context) {
@@ -1005,7 +1006,6 @@ func (s *Server) requireAdmin(c *gin.Context) {
 
 	c.Next()
 }
-
 
 // requireTestModePassword 中间件：测试模式下敏感操作需要密码验证
 // 当 config.json 中 test=true 时，敏感操作需要提供正确的密码
@@ -1665,8 +1665,9 @@ func getEndpointType(path string) *string {
 
 func (s *Server) handleAuthStart(c *gin.Context) {
 	var req struct {
-		Label   *string `json:"label"`
-		Enabled *bool   `json:"enabled"`
+		Label       *string `json:"label"`
+		Enabled     *bool   `json:"enabled"`
+		AWSStartURL *string `json:"awsStartUrl"` // AWS Start URL（可选）
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(400, gin.H{"error": "无效的请求格式"})
@@ -1700,8 +1701,12 @@ func (s *Server) handleAuthStart(c *gin.Context) {
 		return
 	}
 
-	// 开始设备授权
-	devResp, err := s.oidcClient.DeviceAuthorize(c.Request.Context(), clientID, clientSecret, machineId)
+	// 开始设备授权（传递 Start URL）
+	var startURL string
+	if req.AWSStartURL != nil {
+		startURL = *req.AWSStartURL
+	}
+	devResp, err := s.oidcClient.DeviceAuthorize(c.Request.Context(), clientID, clientSecret, machineId, startURL)
 	if err != nil {
 		c.JSON(502, gin.H{"error": fmt.Sprintf("OIDC error: %v", err)})
 		return
@@ -1721,6 +1726,7 @@ func (s *Server) handleAuthStart(c *gin.Context) {
 		Enabled:                 req.Enabled == nil || *req.Enabled,
 		Status:                  "pending",
 		MachineID:               machineId,
+		AWSStartURL:             req.AWSStartURL,
 	}
 
 	s.authSessions.Store(authID, session)
@@ -1810,6 +1816,7 @@ func (s *Server) handleAuthClaim(c *gin.Context) {
 		UpdatedAt:         models.CurrentTime(),
 		Enabled:           session.Enabled,
 		MachineID:         &session.MachineID,
+		AWSStartURL:       session.AWSStartURL,
 	}
 
 	if err := s.db.CreateAccount(c.Request.Context(), account); err != nil {
@@ -1973,7 +1980,6 @@ func (s *Server) syncRemoteAnnouncement(ctx context.Context) {
 	}
 }
 
-
 // truncateString 截断字符串，用于日志显示
 // @author ygw
 func truncateString(s string, maxLen int) string {
@@ -2080,13 +2086,13 @@ func (s *Server) RefreshAccountQuota(ctx context.Context, account *models.Accoun
 // @author ygw - 被动刷新策略
 func (s *Server) RefreshAccountTokenAndRetry(ctx context.Context, account *models.Account) error {
 	logger.Info("[被动刷新] 开始刷新账号 %s 的令牌", account.ID)
-	
+
 	err := s.refreshAccountToken(ctx, account.ID)
 	if err != nil {
 		logger.Warn("[被动刷新] 账号 %s 令牌刷新失败: %v", account.ID, err)
 		return err
 	}
-	
+
 	logger.Info("[被动刷新] 账号 %s 令牌刷新成功", account.ID)
 	return nil
 }
@@ -2132,7 +2138,7 @@ func (s *Server) EnsureAccountReady(ctx context.Context, account *models.Account
 
 	elapsed := time.Since(startTime)
 	logger.Debug("[被动刷新] 账号 %s 检查完成，耗时: %.0fms", account.ID, elapsed.Seconds()*1000)
-	
+
 	return account, nil
 }
 

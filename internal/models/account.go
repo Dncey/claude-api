@@ -30,14 +30,15 @@ type Account struct {
 	AuthMethod        *string         `gorm:"column:auth_method;size:50" json:"auth_method"`
 	Region            *string         `gorm:"size:50;default:'us-east-1'" json:"region"`
 	MachineID         *string         `gorm:"column:machine_id;size:64" json:"machine_id"`
+	AWSStartURL       *string         `gorm:"column:aws_start_url;size:255" json:"aws_start_url"` // AWS Identity Center Start URL
 	Password          *string         `gorm:"column:password;size:255" json:"password"`
 	Username          *string         `gorm:"column:username;size:255" json:"username"`
 	// 配额相关字段
-	UsageCurrent      float64         `gorm:"column:usage_current;default:0" json:"usage_current"`
-	UsageLimit        float64         `gorm:"column:usage_limit;default:0" json:"usage_limit"`
-	SubscriptionType  *string         `gorm:"column:subscription_type;size:50" json:"subscription_type"`
-	QuotaRefreshedAt  *string         `gorm:"column:quota_refreshed_at;size:50" json:"quota_refreshed_at"`
-	TokenExpiry       *int64          `gorm:"column:token_expiry" json:"token_expiry"` // 有效时间（Unix时间戳）@author ygw
+	UsageCurrent     float64 `gorm:"column:usage_current;default:0" json:"usage_current"`
+	UsageLimit       float64 `gorm:"column:usage_limit;default:0" json:"usage_limit"`
+	SubscriptionType *string `gorm:"column:subscription_type;size:50" json:"subscription_type"`
+	QuotaRefreshedAt *string `gorm:"column:quota_refreshed_at;size:50" json:"quota_refreshed_at"`
+	TokenExpiry      *int64  `gorm:"column:token_expiry" json:"token_expiry"` // 有效时间（Unix时间戳）@author ygw
 }
 
 // TableName 指定表名
@@ -71,6 +72,7 @@ type AccountUpdate struct {
 	Region       *string                `json:"region"`
 	QUserID      *string                `json:"qUserId"`
 	MachineID    *string                `json:"machineId"`
+	AWSStartURL  *string                `json:"awsStartUrl"` // AWS Identity Center Start URL
 }
 
 // BatchAccountCreate 表示批量创建账号请求
@@ -89,6 +91,7 @@ type DirectImportAccount struct {
 	Password     *string `json:"password"`
 	Username     *string `json:"username"`
 	AddedTime    *string `json:"added_time"`
+	AWSStartURL  *string `json:"awsStartUrl"` // AWS Start URL（可选）
 }
 
 // DirectImportRequest 直接导入账号请求（支持批量）

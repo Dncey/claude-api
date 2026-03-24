@@ -2,13 +2,6 @@ package api
 
 import (
 	"bufio"
-	"context"
-	"encoding/json"
-	"fmt"
-	"io"
-	"net/http"
-	"os"
-	"path/filepath"
 	"claude-api/internal/amazonq"
 	"claude-api/internal/auth"
 	"claude-api/internal/claude"
@@ -19,6 +12,13 @@ import (
 	"claude-api/internal/stream"
 	"claude-api/internal/sync"
 	"claude-api/internal/tokenizer"
+	"context"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -138,6 +138,7 @@ func (s *Server) handleCreateAccount(c *gin.Context) {
 		Enabled      *bool   `json:"enabled"`
 		ErrorCount   *int    `json:"errorCount"`
 		SuccessCount *int    `json:"successCount"`
+		AWSStartURL  *string `json:"awsStartUrl"` // AWS Start URL（可选）
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -198,6 +199,7 @@ func (s *Server) handleCreateAccount(c *gin.Context) {
 		Enabled:           enabled,
 		ErrorCount:        errorCount,
 		SuccessCount:      successCount,
+		AWSStartURL:       req.AWSStartURL,
 	}
 
 	logger.Info("正在创建账号 - ID: %s, 标签: %v, 启用: %v", account.ID, account.Label, enabled)
@@ -591,6 +593,7 @@ func (s *Server) handleDirectImportAccounts(c *gin.Context) {
 			Region:            strPtr("us-east-1"),
 			Password:          acc.Password,
 			Username:          acc.Username,
+			AWSStartURL:       acc.AWSStartURL,
 		}
 
 		if err := s.db.CreateAccount(c.Request.Context(), account); err == nil {
@@ -1336,6 +1339,11 @@ func (s *Server) handleUpdateAccount(c *gin.Context) {
 			updates.Enabled = &enabledBool
 		}
 	}
+	if awsStartUrl, ok := req["awsStartUrl"]; ok {
+		if awsStartUrlStr, ok := awsStartUrl.(string); ok {
+			updates.AWSStartURL = &awsStartUrlStr
+		}
+	}
 
 	logger.Info("正在更新账号 %s - 字段: %v", accountID, req)
 
@@ -1920,7 +1928,6 @@ func (s *Server) handleUpdateSettings(c *gin.Context) {
 
 	c.JSON(200, settings)
 }
-
 
 // handleClaudeMessages 处理 Claude Messages API 端点
 func (s *Server) handleClaudeMessages(c *gin.Context) {
@@ -4508,4 +4515,3 @@ func (s *Server) handleToggleProxy(c *gin.Context) {
 // 		}
 // 	}
 // }
-

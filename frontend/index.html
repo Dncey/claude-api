@@ -2295,6 +2295,22 @@ export ANTHROPIC_API_KEY=你的API密钥</code></pre>
                             <span>遵循以上步骤可有效避免账号被封控风险</span>
                         </div>
                     </div>
+                    <!-- AWS Start URL 配置 -->
+                    <div class="form-group" style="margin-top: 20px;">
+                        <label class="form-label">
+                            <i class="ri-link"></i> AWS Start URL（可选）
+                        </label>
+                        <input
+                            type="text"
+                            class="form-input"
+                            v-model="awsStartUrl"
+                            placeholder="https://view.awsapps.com/start（留空使用默认值）"
+                        >
+                        <p class="form-hint">
+                            <i class="ri-information-line"></i>
+                            自定义 AWS Identity Center 服务器地址，留空则使用默认值
+                        </p>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn--primary" @click="closeAddAccountTipAndContinue">

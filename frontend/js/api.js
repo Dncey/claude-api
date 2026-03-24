@@ -349,11 +349,15 @@ export async function importBackup(backupData) {
 /**
  * 开始OAuth授权
  */
-export async function startOAuth(label, enabled) {
+export async function startOAuth(label, enabled, awsStartUrl) {
+    const body = { label, enabled };
+    if (awsStartUrl) {
+        body.awsStartUrl = awsStartUrl;
+    }
     const response = await authenticatedFetch('/v2/auth/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ label, enabled })
+        body: JSON.stringify(body)
     });
     if (!response.ok) throw new Error(await response.text());
     return await response.json();
