@@ -287,6 +287,11 @@ func (p *AccountPool) selectSequentialExhaust(accounts []*models.Account) *model
 
 	// 遍历账号，找到第一个配额未用尽的
 	for _, acc := range accounts {
+		// 如果账号开启了忽略配额限制，直接返回（不检查配额）
+		if acc.IgnoreQuotaLimit {
+			return acc
+		}
+
 		if acc.UsageLimit > 0 {
 			// 有配额限制，检查是否还有剩余
 			if acc.UsageCurrent < acc.UsageLimit {

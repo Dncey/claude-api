@@ -864,6 +864,21 @@ export const accountsMixin = {
             }
         },
 
+        async handleToggleIgnoreQuota(accountId, ignoreQuotaLimit) {
+            try {
+                await API.updateAccount(accountId, { ignoreQuotaLimit });
+                showToast(this, `已${ignoreQuotaLimit ? '开启' : '关闭'}忽略额度限制`, 'success');
+                // 更新本地账号状态
+                const account = this.accounts.find(acc => acc.id === accountId);
+                if (account) {
+                    account.ignore_quota_limit = ignoreQuotaLimit;
+                }
+            } catch (error) {
+                showToast(this, '更新失败: ' + error.message, 'error');
+                await this.handleLoadAccounts();
+            }
+        },
+
         async handleRefreshAccount(accountId) {
             try {
                 await API.refreshAccountToken(accountId);

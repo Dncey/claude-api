@@ -223,6 +223,9 @@ func (db *DB) UpdateAccount(ctx context.Context, id string, updates *models.Acco
 	if updates.AWSStartURL != nil {
 		updateMap["aws_start_url"] = updates.AWSStartURL
 	}
+	if updates.IgnoreQuotaLimit != nil {
+		updateMap["ignore_quota_limit"] = *updates.IgnoreQuotaLimit
+	}
 
 	if len(updateMap) == 0 {
 		logger.Debug("数据库: 更新账号无需更新 - ID: %s", id)

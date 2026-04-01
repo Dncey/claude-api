@@ -38,7 +38,8 @@ type Account struct {
 	UsageLimit       float64 `gorm:"column:usage_limit;default:0" json:"usage_limit"`
 	SubscriptionType *string `gorm:"column:subscription_type;size:50" json:"subscription_type"`
 	QuotaRefreshedAt *string `gorm:"column:quota_refreshed_at;size:50" json:"quota_refreshed_at"`
-	TokenExpiry      *int64  `gorm:"column:token_expiry" json:"token_expiry"` // 有效时间（Unix时间戳）@author ygw
+	TokenExpiry      *int64  `gorm:"column:token_expiry" json:"token_expiry"`           // 有效时间（Unix时间戳）@author ygw
+	IgnoreQuotaLimit bool    `gorm:"column:ignore_quota_limit;default:false" json:"ignore_quota_limit"` // 忽略配额限制（开启后不因配额用尽而禁用）@author ygw
 }
 
 // TableName 指定表名
@@ -59,20 +60,21 @@ type AccountCreate struct {
 
 // AccountUpdate 表示更新账号的数据
 type AccountUpdate struct {
-	Label        *string                `json:"label"`
-	ClientID     *string                `json:"clientId"`
-	ClientSecret *string                `json:"clientSecret"`
-	RefreshToken *string                `json:"refreshToken"`
-	AccessToken  *string                `json:"accessToken"`
-	Other        map[string]interface{} `json:"other"`
-	Enabled      *bool                  `json:"enabled"`
-	Status       *string                `json:"status"`
-	Email        *string                `json:"email"`
-	AuthMethod   *string                `json:"authMethod"`
-	Region       *string                `json:"region"`
-	QUserID      *string                `json:"qUserId"`
-	MachineID    *string                `json:"machineId"`
-	AWSStartURL  *string                `json:"awsStartUrl"` // AWS Identity Center Start URL
+	Label            *string                `json:"label"`
+	ClientID         *string                `json:"clientId"`
+	ClientSecret     *string                `json:"clientSecret"`
+	RefreshToken     *string                `json:"refreshToken"`
+	AccessToken      *string                `json:"accessToken"`
+	Other            map[string]interface{} `json:"other"`
+	Enabled          *bool                  `json:"enabled"`
+	Status           *string                `json:"status"`
+	Email            *string                `json:"email"`
+	AuthMethod       *string                `json:"authMethod"`
+	Region           *string                `json:"region"`
+	QUserID          *string                `json:"qUserId"`
+	MachineID        *string                `json:"machineId"`
+	AWSStartURL      *string                `json:"awsStartUrl"`      // AWS Identity Center Start URL
+	IgnoreQuotaLimit *bool                  `json:"ignoreQuotaLimit"` // 忽略配额限制 @author ygw
 }
 
 // BatchAccountCreate 表示批量创建账号请求

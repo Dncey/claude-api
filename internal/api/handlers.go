@@ -97,6 +97,12 @@ func (s *Server) handleAccountStatusByError(ctx context.Context, accountID strin
 
 	switch errorCode {
 	case "QUOTA_EXCEEDED":
+		// 检查账号是否开启了忽略配额限制
+		account, err := s.db.GetAccount(ctx, accountID)
+		if err == nil && account != nil && account.IgnoreQuotaLimit {
+			logger.Info("账号 %s 配额用尽但已开启忽略配额限制，跳过状态更新", accountID)
+			return
+		}
 		status = models.AccountStatusExhausted
 		reason = "配额用尽"
 	case "TEMPORARILY_SUSPENDED":
@@ -381,7 +387,8 @@ func (s *Server) handleListAccounts(c *gin.Context) {
 			"usage_limit":        acc.UsageLimit,
 			"subscription_type":  acc.SubscriptionType,
 			"quota_refreshed_at": acc.QuotaRefreshedAt,
-			"token_expiry":       acc.TokenExpiry, // 有效时间 @author ygw
+			"token_expiry":       acc.TokenExpiry,       // 有效时间 @author ygw
+			"ignore_quota_limit": acc.IgnoreQuotaLimit, // 忽略配额限制 @author ygw
 		}
 	}
 
@@ -1344,6 +1351,11 @@ func (s *Server) handleUpdateAccount(c *gin.Context) {
 			updates.AWSStartURL = &awsStartUrlStr
 		}
 	}
+	if ignoreQuotaLimit, ok := req["ignoreQuotaLimit"]; ok {
+		if ignoreQuotaLimitBool, ok := ignoreQuotaLimit.(bool); ok {
+			updates.IgnoreQuotaLimit = &ignoreQuotaLimitBool
+		}
+	}
 
 	logger.Info("正在更新账号 %s - 字段: %v", accountID, req)
 
@@ -1719,8 +1731,13 @@ func (s *Server) handleGetAccountQuota(c *gin.Context) {
 	// 检查是否用尽，如果用尽则更新状态
 	// @author ygw
 	if usageLimit > 0 && usageCurrent >= usageLimit {
-		logger.Warn("账号 %s 配额已用尽 - 使用量: %.2f/%.2f", accountID, usageCurrent, usageLimit)
-		s.handleAccountStatusByError(c.Request.Context(), accountID, "QUOTA_EXCEEDED")
+		// 检查账号是否开启了忽略配额限制
+		if account.IgnoreQuotaLimit {
+			logger.Info("账号 %s 配额已用尽但已开启忽略配额限制，跳过状态更新 - 使用量: %.2f/%.2f", accountID, usageCurrent, usageLimit)
+		} else {
+			logger.Warn("账号 %s 配额已用尽 - 使用量: %.2f/%.2f", accountID, usageCurrent, usageLimit)
+			s.handleAccountStatusByError(c.Request.Context(), accountID, "QUOTA_EXCEEDED")
+		}
 	}
 
 	result["fromCache"] = false

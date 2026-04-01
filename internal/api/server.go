@@ -322,8 +322,14 @@ func (s *Server) RefreshAllAccountsQuota(ctx context.Context) {
 				// 检查是否为配额用尽
 				if amazonq.IsErrorCode(err, amazonq.ErrCodeQuotaExceeded) {
 					logger.Debug("[配额同步] 账号 %s 配额用尽 - 耗时: %.0fms", account.ID, elapsed.Seconds()*1000)
-					s.handleAccountStatusByError(ctx, account.ID, "QUOTA_EXCEEDED")
-					atomic.AddInt32(&exhaustedCount, 1)
+					// 检查账号是否开启了忽略配额限制
+					if !account.IgnoreQuotaLimit {
+						s.handleAccountStatusByError(ctx, account.ID, "QUOTA_EXCEEDED")
+						atomic.AddInt32(&exhaustedCount, 1)
+					} else {
+						logger.Info("[配额同步] 账号 %s 配额用尽但已开启忽略配额限制，跳过状态更新", account.ID)
+						atomic.AddInt32(&successCount, 1) // 计入成功
+					}
 					return
 				}
 				// 检查是否为 token 失效
@@ -458,8 +464,14 @@ func (s *Server) RefreshAllAccountsQuotaWithStats(ctx context.Context) map[strin
 				// 检查是否为配额用尽
 				if amazonq.IsErrorCode(err, amazonq.ErrCodeQuotaExceeded) {
 					logger.Debug("[配额同步] 账号 %s 配额用尽 - 耗时: %.0fms", account.ID, elapsed.Seconds()*1000)
-					s.handleAccountStatusByError(ctx, account.ID, "QUOTA_EXCEEDED")
-					atomic.AddInt32(&exhaustedCount, 1)
+					// 检查账号是否开启了忽略配额限制
+					if !account.IgnoreQuotaLimit {
+						s.handleAccountStatusByError(ctx, account.ID, "QUOTA_EXCEEDED")
+						atomic.AddInt32(&exhaustedCount, 1)
+					} else {
+						logger.Info("[配额同步] 账号 %s 配额用尽但已开启忽略配额限制，跳过状态更新", account.ID)
+						atomic.AddInt32(&successCount, 1) // 计入成功
+					}
 					return
 				}
 				// 检查是否为 token 失效

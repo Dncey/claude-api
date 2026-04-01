@@ -494,6 +494,7 @@ export ANTHROPIC_API_KEY=你的API密钥</code></pre>
                                     配额
                                     <i class="sort-icon" :class="accountSortField === 'quota' ? (accountSortOrder === 'asc' ? 'ri-arrow-up-s-line' : 'ri-arrow-down-s-line') : 'ri-arrow-up-down-line'"></i>
                                 </th>
+                                <th class="col-ignore-quota">忽略额度</th>
                                 <th class="col-expiry">有效时间</th>
                                 <th class="col-created sortable" @click="sortAccountsBy('created')" :class="{'sort-active': accountSortField === 'created'}">
                                     创建时间
@@ -557,6 +558,14 @@ export ANTHROPIC_API_KEY=你的API密钥</code></pre>
                                         </div>
                                         <span class="quota-text">{{ getQuotaDisplay(account.id) }}</span>
                                     </div>
+                                </td>
+                                <td class="col-ignore-quota">
+                                    <label class="toggle-switch-mini">
+                                        <input type="checkbox"
+                                               :checked="account.ignore_quota_limit"
+                                               @change="handleToggleIgnoreQuota(account.id, $event.target.checked)">
+                                        <span class="toggle-slider-mini"></span>
+                                    </label>
                                 </td>
                                 <td class="col-expiry">
                                     <span class="expiry-text"

@@ -2854,9 +2854,70 @@ a.btn {
 .account-table .col-success { width: 70px; text-align: center; }
 .account-table .col-error { width: 70px; text-align: center; }
 .account-table .col-quota { width: 120px; }
+.account-table .col-ignore-quota { width: 80px; text-align: center; }
 .account-table .col-expiry { width: 100px; }
 .account-table .col-created { width: 130px; }
 .account-table .col-actions { width: 160px; }
+
+/* 迷你开关样式 - 用于表格内嵌 @author ygw */
+.toggle-switch-mini {
+    position: relative;
+    display: inline-block;
+    width: 36px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.toggle-switch-mini input[type="checkbox"] {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider-mini {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    border-radius: 20px;
+    transition: background-color 0.2s;
+}
+
+.toggle-slider-mini:before {
+    content: "";
+    position: absolute;
+    height: 14px;
+    width: 14px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    border-radius: 50%;
+    transition: transform 0.2s;
+}
+
+.toggle-switch-mini input:checked + .toggle-slider-mini {
+    background-color: #4caf50;
+}
+
+.toggle-switch-mini input:checked + .toggle-slider-mini:before {
+    transform: translateX(16px);
+}
+
+.toggle-switch-mini input:disabled + .toggle-slider-mini {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+[data-theme="dark"] .toggle-slider-mini {
+    background-color: #555;
+}
+
+[data-theme="dark"] .toggle-switch-mini input:checked + .toggle-slider-mini {
+    background-color: #66bb6a;
+}
+
 
 /* 有效时间文本样式 @author ygw */
 .expiry-text {
