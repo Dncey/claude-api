@@ -111,14 +111,37 @@ func (p *AccountPool) Refresh(ctx context.Context) {
 	var accounts []*models.Account
 	var err error
 
-	// 只获取状态为 normal 的账号（优化：封控/用尽的账号不再进入池）
+	// 获取可用账号：normal 状态 + 开启了忽略配额限制的 exhausted 状态账号
 	if cfg.lazyEnabled {
 		accounts, err = p.db.ListAccountsByStatus(ctx, models.AccountStatusNormal, cfg.lazyOrderBy, cfg.lazyOrderDesc)
-		if err == nil && cfg.lazyPoolSize > 0 && len(accounts) > cfg.lazyPoolSize {
-			accounts = accounts[:cfg.lazyPoolSize]
+		if err == nil {
+			// 额外获取开启了忽略配额限制的 exhausted 状态账号
+			exhaustedAccounts, exhaustedErr := p.db.ListAccountsByStatus(ctx, models.AccountStatusExhausted, cfg.lazyOrderBy, cfg.lazyOrderDesc)
+			if exhaustedErr == nil {
+				for _, acc := range exhaustedAccounts {
+					if acc.IgnoreQuotaLimit {
+						accounts = append(accounts, acc)
+					}
+				}
+			}
+
+			if cfg.lazyPoolSize > 0 && len(accounts) > cfg.lazyPoolSize {
+				accounts = accounts[:cfg.lazyPoolSize]
+			}
 		}
 	} else {
 		accounts, err = p.db.ListAccountsByStatus(ctx, models.AccountStatusNormal, "created_at", true)
+		if err == nil {
+			// 额外获取开启了忽略配额限制的 exhausted 状态账号
+			exhaustedAccounts, exhaustedErr := p.db.ListAccountsByStatus(ctx, models.AccountStatusExhausted, "created_at", true)
+			if exhaustedErr == nil {
+				for _, acc := range exhaustedAccounts {
+					if acc.IgnoreQuotaLimit {
+						accounts = append(accounts, acc)
+					}
+				}
+			}
+		}
 	}
 
 	if err != nil {
