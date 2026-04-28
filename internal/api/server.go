@@ -793,15 +793,15 @@ func (s *Server) doRefreshAccountToken(ctx context.Context, accountID string) er
 		logger.Debug("使用 Kiro 社交登录刷新接口 - 账号: %s", accountID)
 		result, err := s.kiroClient.RefreshSocialToken(ctx, *acc.RefreshToken, machineId)
 		if err != nil {
-			// 更新状态为失败，UpdateStats 会自动处理错误计数和禁用逻辑
-			_ = s.db.UpdateTokens(ctx, accountID, "", *acc.RefreshToken, "failed")
+			// 刷新失败时只更新状态，保留旧令牌继续使用
+			_ = s.db.UpdateRefreshStatus(ctx, accountID, "failed")
 			_ = s.db.UpdateStats(ctx, accountID, false)
 			return fmt.Errorf("社交登录刷新失败: %w", err)
 		}
 
 		if !result.Success {
-			// 更新状态为失败，UpdateStats 会自动处理错误计数和禁用逻辑
-			_ = s.db.UpdateTokens(ctx, accountID, "", *acc.RefreshToken, "failed")
+			// 刷新失败时只更新状态，保留旧令牌继续使用
+			_ = s.db.UpdateRefreshStatus(ctx, accountID, "failed")
 			_ = s.db.UpdateStats(ctx, accountID, false)
 			return fmt.Errorf("社交登录刷新失败: %s", result.Error)
 		}
@@ -821,8 +821,8 @@ func (s *Server) doRefreshAccountToken(ctx context.Context, accountID string) er
 		var err error
 		accessToken, refreshToken, err = s.oidcClient.RefreshAccessToken(ctx, acc.ClientID, acc.ClientSecret, *acc.RefreshToken, machineId)
 		if err != nil {
-			// 更新状态为失败，UpdateStats 会自动处理错误计数和禁用逻辑
-			_ = s.db.UpdateTokens(ctx, accountID, "", *acc.RefreshToken, "failed")
+			// 刷新失败时只更新状态，保留旧令牌继续使用
+			_ = s.db.UpdateRefreshStatus(ctx, accountID, "failed")
 			_ = s.db.UpdateStats(ctx, accountID, false)
 			return err
 		}

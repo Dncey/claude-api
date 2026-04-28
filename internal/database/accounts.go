@@ -420,6 +420,28 @@ func (db *DB) UpdateTokens(ctx context.Context, id string, accessToken, refreshT
 	return nil
 }
 
+// UpdateRefreshStatus 只更新刷新状态，不修改令牌（用于刷新失败时）
+func (db *DB) UpdateRefreshStatus(ctx context.Context, id string, status string) error {
+	logger.Debug("数据库: 更新账号刷新状态 - ID: %s, 状态: %s", id, status)
+
+	now := models.CurrentTime()
+	updateMap := map[string]interface{}{
+		"last_refresh_time":   now,
+		"last_refresh_status": status,
+		"updated_at":          now,
+	}
+
+	err := db.gorm.WithContext(ctx).Model(&models.Account{}).Where("id = ?", id).Updates(updateMap).Error
+
+	if err != nil {
+		logger.Debug("数据库: 更新刷新状态失败 - ID: %s, 错误: %v", id, err)
+		return err
+	}
+
+	logger.Debug("数据库: 刷新状态更新成功 - ID: %s", id)
+	return nil
+}
+
 // UpdateQUserID 更新账号的 Q 用户 ID，标签为空时用 userId 填充
 func (db *DB) UpdateQUserID(ctx context.Context, id string, qUserID string, label string) error {
 	logger.Debug("数据库: 更新 Q 用户 ID - 账号ID: %s, QUserID: %s, Label: %s", id, qUserID, label)

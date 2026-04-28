@@ -327,15 +327,22 @@ build_desktop() {
         ldflags="$ldflags -H windowsgui"
     fi
     
-    wails build -platform "$platform" -ldflags "$ldflags"
-    
-    # 打包
+    wails build -platform "$platform" -ldflags "$ldflags" -nopackage
+
+    # 手动打包 app（跳过签名）
     case "$goos" in
         darwin)
-            local app_path="$DESKTOP_DIR/build/bin/Claude API Server.app"
-            local resources_dir="$app_path/Contents/Resources"
+            local app_path="$DESKTOP_DIR/build/bin/desktop.app"
+            local renamed_app="$DESKTOP_DIR/build/bin/Claude API Server.app"
 
+            # 重命名 app
             if [ -d "$app_path" ]; then
+                mv "$app_path" "$renamed_app"
+            fi
+
+            local resources_dir="$renamed_app/Contents/Resources"
+
+            if [ -d "$renamed_app" ]; then
                 # 复制后端到 app 包内
                 mkdir -p "$resources_dir"
                 cp "$DESKTOP_DIR/embedded/claude-server" "$resources_dir/claude-server"
@@ -362,11 +369,11 @@ build_desktop() {
             fi
             ;;
         windows)
-            local exe_path="$DESKTOP_DIR/build/bin/Claude API Server.exe"
+            local exe_path="$DESKTOP_DIR/build/bin/desktop.exe"
             if [ -f "$exe_path" ]; then
                 local zip_name="Claude-API-Server-Windows-$goarch.zip"
                 cd "$DESKTOP_DIR/build/bin"
-                zip -jq "$DIST_DIR/desktop/$zip_name" "Claude API Server.exe"
+                zip -jq "$DIST_DIR/desktop/$zip_name" "desktop.exe"
                 log_success "Desktop [$platform] -> $DIST_DIR/desktop/$zip_name"
             else
                 log_error "找不到 Windows 可执行文件: $exe_path"
