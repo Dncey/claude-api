@@ -38,8 +38,11 @@ var validModels = map[string]bool{
 	"auto":              true,
 	"claude-sonnet-4":   true,
 	"claude-sonnet-4.5": true,
+	"claude-sonnet-4.6": true,
 	"claude-haiku-4.5":  true,
+	"claude-haiku-4.6":  true,
 	"claude-opus-4.5":   true,
+	"claude-opus-4.6":   true,
 }
 
 // 规范模型名称到短名称的映射
@@ -47,8 +50,13 @@ var canonicalToShort = map[string]string{
 	"claude-sonnet-4-20250514":   "claude-sonnet-4",
 	"claude-sonnet-4-5-20250929": "claude-sonnet-4.5",
 	"claude-sonnet-4-5":          "claude-sonnet-4.5",
+	"claude-sonnet-4-6":          "claude-sonnet-4.6",
 	"claude-haiku-4-5-20251001":  "claude-haiku-4.5",
+	"claude-haiku-4-5":           "claude-haiku-4.5",
+	"claude-haiku-4-6":           "claude-haiku-4.6",
 	"claude-opus-4-5-20251101":   "claude-opus-4.5",
+	"claude-opus-4-5":            "claude-opus-4.5",
+	"claude-opus-4-6":            "claude-opus-4.6",
 	// Claude 3.5 Sonnet 旧版映射
 	"claude-3-5-sonnet-20241022": "claude-sonnet-4.5",
 	"claude-3-5-sonnet-20240620": "claude-sonnet-4.5",
@@ -56,23 +64,30 @@ var canonicalToShort = map[string]string{
 
 // MapModelName 将 Claude 模型名称映射到 Amazon Q 模型 ID
 // 支持短名称（如 claude-sonnet-4）和规范名称（如 claude-sonnet-4-20250514）
+// 策略：优先使用映射表，未知模型直接透传给 AWS Q（让上游判断是否支持）
 func MapModelName(claudeModel string) string {
-	const defaultModel = "claude-sonnet-4.5"
+	if claudeModel == "" {
+		logger.Warn("[模型映射] 模型名称为空，使用默认模型 claude-sonnet-4.5")
+		return "claude-sonnet-4.5"
+	}
 
 	modelLower := strings.ToLower(claudeModel)
 
-	// 检查是否是有效的短名称
+	// 1. 检查是否是有效的短名称
 	if validModels[modelLower] {
+		logger.Debug("[模型映射] 使用有效短名称: %s", modelLower)
 		return modelLower
 	}
 
-	// 检查是否是规范名称
+	// 2. 检查是否是规范名称（需要映射）
 	if shortName, ok := canonicalToShort[modelLower]; ok {
+		logger.Debug("[模型映射] 规范名称映射: %s -> %s", claudeModel, shortName)
 		return shortName
 	}
 
-	// 未知模型，返回默认模型
-	return defaultModel
+	// 3. 未知模型，直接透传给 AWS Q（让上游判断是否支持）
+	logger.Info("[模型映射] 未知模型，直接透传: %s（让 AWS Q 判断是否支持）", claudeModel)
+	return modelLower
 }
 
 // getCurrentTimestamp 获取当前时间戳
@@ -86,8 +101,8 @@ func wrapThinkingContent(text string) string {
 	return ThinkingStartTag + text + ThinkingEndTag
 }
 
-// isThinkingModeEnabled 检测是否启用了 thinking 模式
-func isThinkingModeEnabled(thinking interface{}) bool {
+// IsThinkingModeEnabled 检测是否启用了 thinking 模式
+func IsThinkingModeEnabled(thinking interface{}) bool {
 	if thinking == nil {
 		return false
 	}
@@ -251,7 +266,7 @@ func ConvertClaudeToAmazonQ(req *models.ClaudeRequest, conversationID string, _ 
 	}
 
 	// 检测 thinking 模式
-	thinkingEnabled := isThinkingModeEnabled(req.Thinking)
+	thinkingEnabled := IsThinkingModeEnabled(req.Thinking)
 
 	// 1. 转换工具
 	var aqTools []models.Tool

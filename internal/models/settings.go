@@ -101,17 +101,29 @@ type SettingsUpdate struct {
 
 // 支持的压缩模型列表
 var SupportedCompressionModels = []string{
+	"claude-haiku-4.5",
+	"claude-haiku-4.6",
 	"claude-haiku-4-5-20251001",
+	"claude-sonnet-4.5",
+	"claude-sonnet-4.6",
 	"claude-sonnet-4-5-20250929",
+	"claude-opus-4.5",
+	"claude-opus-4.6",
 	"claude-opus-4-5-20251101",
 }
 
 // 支持的强制模型列表（用于 API 请求）
 var SupportedForceModels = []string{
+	"claude-haiku-4.5",
+	"claude-haiku-4.6",
 	"claude-haiku-4-5-20251001",
+	"claude-sonnet-4.5",
+	"claude-sonnet-4.6",
 	"claude-sonnet-4-5-20250929",
+	"claude-opus-4.5",
+	"claude-opus-4.6",
 	"claude-opus-4-5-20251101",
 }
 
-// DefaultCompressionModel 默认压缩模型
-const DefaultCompressionModel = "claude-sonnet-4-5-20250929"
+// DefaultCompressionModel 默认压缩模型（使用 Sonnet 4.6 以获得更好的摘要质量）
+const DefaultCompressionModel = "claude-sonnet-4.6"

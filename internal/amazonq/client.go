@@ -177,7 +177,7 @@ var nonRetriableErrors = []struct {
 		Error: NonRetriableError{
 			Code:         "INVALID_MODEL",
 			Message:      "请求的模型不可用",
-			Hint:         "老板您好～您请求的模型当前不可用或不受支持。请尝试使用其他模型，如 claude-sonnet-4-5-20250929。给您添麻烦了！🙏",
+			Hint:         "老板您好～您请求的模型当前不可用或不受支持。请尝试使用其他模型，如 claude-haiku-4.5、claude-sonnet-4.6 或 claude-opus-4.6。给您添麻烦了！🙏",
 			IsRequestErr: true,
 		},
 	},
@@ -186,7 +186,7 @@ var nonRetriableErrors = []struct {
 		Error: NonRetriableError{
 			Code:         "INVALID_MODEL",
 			Message:      "请求的模型不可用",
-			Hint:         "老板您好～您请求的模型当前不可用或不受支持。请尝试使用其他模型，如 claude-sonnet-4-5-20250929。给您添麻烦了！🙏",
+			Hint:         "老板您好～您请求的模型当前不可用或不受支持。请尝试使用其他模型，如 claude-haiku-4.5、claude-sonnet-4.6 或 claude-opus-4.6。给您添麻烦了！🙏",
 			IsRequestErr: true,
 		},
 	},

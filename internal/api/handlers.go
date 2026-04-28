@@ -2236,6 +2236,10 @@ func (s *Server) handleClaudeMessages(c *gin.Context) {
 			logger.Debug("[Claude->AmazonQ] 转换后请求体: %s", string(aqPayloadJSON))
 		}
 
+		// 记录实际发送给 AWS Q 的模型 ID
+		actualModelID := aqPayload.ConversationState.CurrentMessage.UserInputMessage.ModelID
+		logger.Info("[请求模型] 原始模型: %s, 映射后模型: %s, 账号: %s", req.Model, actualModelID, acc.ID)
+
 		machineId := s.ensureAccountMachineID(c.Request.Context(), acc)
 		resp, err = s.aqClient.SendChatRequest(c.Request.Context(), *acc.AccessToken, machineId, acc.ID, aqPayload, logTimestamp)
 		if err != nil {
@@ -2255,7 +2259,10 @@ func (s *Server) handleClaudeMessages(c *gin.Context) {
 						// 如果是上下文超出错误，打印具体的 token 数量
 						if nrErr.Code == "CONTENT_LENGTH_EXCEEDS_THRESHOLD" || nrErr.Code == "INPUT_TOO_LONG" {
 							inputTokens := countClaudeInputTokens(&req)
-							logger.Error("【上下文超出】输入 Token: %d, 消息数: %d, 模型: %s", inputTokens, len(req.Messages), req.Model)
+							logger.Error("【上下文超出】输入 Token: %d, 消息数: %d, 原始模型: %s, 实际模型: %s", inputTokens, len(req.Messages), req.Model, actualModelID)
+						} else if nrErr.Code == "INVALID_MODEL" {
+							// 模型错误，记录详细信息
+							logger.Error("【模型错误】原始模型: %s, 映射后模型: %s, 错误: %s", req.Model, actualModelID, nrErr.Message)
 						}
 						logger.Warn("检测到请求错误，终止重试 - 错误: %s, 提示: %s", nrErr.Message, nrErr.Hint)
 						c.Set("error_message", nrErr.Message)
@@ -2310,7 +2317,7 @@ func (s *Server) handleClaudeMessages(c *gin.Context) {
 	if req.Stream {
 		// 控制台模式使用 UnifiedStreamHandler（前端期望的格式）
 		// 标准 Claude API 使用 ClaudeStreamHandler（标准 Claude SSE 格式）
-		isThinking := req.Thinking != nil
+		isThinking := claude.IsThinkingModeEnabled(req.Thinking)
 		if isConsoleMode {
 			s.handleConsoleStreamResponse(c, resp, req.Model, conversationID, clientIP, startTime, len(req.Messages), acc, inputTokens, isThinking)
 		} else {
@@ -2356,10 +2363,11 @@ func (s *Server) handleConsoleStreamResponse(c *gin.Context, resp *http.Response
 			c.Set("output_tokens", outputTokens)
 
 			modelDisplay := model
+			thinkingStatus := "关闭"
 			if isThinking {
-				modelDisplay = model + "-thinking"
+				thinkingStatus = "开启"
 			}
-			logger.Info("控制台流式响应完成 - 来源: %s, 模型: %s, 消息数: %d, 输入token: %d, 输出token: %d, 耗时: %dms", clientIP, modelDisplay, msgCount, inputTokens, outputTokens, duration.Milliseconds())
+			logger.Info("控制台流式响应完成 - 来源: %s, 模型: %s (thinking: %s), 消息数: %d, 输入token: %d, 输出token: %d, 耗时: %dms", clientIP, modelDisplay, thinkingStatus, msgCount, inputTokens, outputTokens, duration.Milliseconds())
 			return false
 		}
 
@@ -2430,10 +2438,11 @@ func (s *Server) handleClaudeStreamResponse(c *gin.Context, resp *http.Response,
 			c.Set("output_tokens", outputTokens)
 
 			modelDisplay := model
+			thinkingStatus := "关闭"
 			if isThinking {
-				modelDisplay = model + "-thinking"
+				thinkingStatus = "开启"
 			}
-			logger.Info("Claude 流式响应完成 - 来源: %s, 模型: %s, 消息数: %d, 输入token: %d, 输出token: %d, 耗时: %dms", clientIP, modelDisplay, msgCount, inputTokens, outputTokens, duration.Milliseconds())
+			logger.Info("Claude 流式响应完成 - 来源: %s, 模型: %s (thinking: %s), 消息数: %d, 输入token: %d, 输出token: %d, 耗时: %dms", clientIP, modelDisplay, thinkingStatus, msgCount, inputTokens, outputTokens, duration.Milliseconds())
 			return false
 		}
 
@@ -2762,6 +2771,10 @@ func (s *Server) handleChatCompletions(c *gin.Context) {
 		return
 	}
 
+	// 记录实际发送给 AWS Q 的模型 ID
+	actualModelID := aqPayload.ConversationState.CurrentMessage.UserInputMessage.ModelID
+	logger.Info("[请求模型] OpenAI格式 - 原始模型: %s, 映射后模型: %s, 账号: %s", req.Model, actualModelID, account.ID)
+
 	// 设置日志记录所需的信息
 	c.Set("model", req.Model)
 	c.Set("is_stream", req.Stream)
@@ -2777,7 +2790,10 @@ func (s *Server) handleChatCompletions(c *gin.Context) {
 			if nrErr, ok := err.(*amazonq.NonRetriableError); ok {
 				// 如果是上下文超出错误，打印具体的 token 数量
 				if nrErr.Code == "CONTENT_LENGTH_EXCEEDS_THRESHOLD" || nrErr.Code == "INPUT_TOO_LONG" {
-					logger.Error("【上下文超出】输入 Token: %d, 消息数: %d, 模型: %s", inputTokens, len(req.Messages), req.Model)
+					logger.Error("【上下文超出】输入 Token: %d, 消息数: %d, 原始模型: %s, 实际模型: %s", inputTokens, len(req.Messages), req.Model, actualModelID)
+				} else if nrErr.Code == "INVALID_MODEL" {
+					// 模型错误，记录详细信息
+					logger.Error("【模型错误】OpenAI格式 - 原始模型: %s, 映射后模型: %s, 错误: %s", req.Model, actualModelID, nrErr.Message)
 				}
 				// 请求错误不计入账号统计
 				if !nrErr.IsRequestErr {
