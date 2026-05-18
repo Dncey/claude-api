@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"golang.org/x/net/http2"
 	"golang.org/x/net/proxy"
 )
 
@@ -271,6 +272,19 @@ func NewClient(cfg *config.Config) *Client {
 	transport.TLSHandshakeTimeout = DefaultTLSHandshakeTimeout     // TLS 握手超时
 	transport.DisableKeepAlives = false                            // 保持连接活跃（重要！）
 	transport.ForceAttemptHTTP2 = true                             // 尝试使用 HTTP/2
+
+	// HTTP/2 死连接探活：避免中间设备（NAT/防火墙/运营商）静默断连后，
+	// Go 的连接池继续复用"僵尸连接"，导致请求 hang 直到响应头超时。
+	// 配置后空闲 30s 主动发 PING 帧；15s 内没收到 ACK 就关闭重建。
+	// @author ygw - 修复 timeout awaiting response headers 问题
+	if h2, err := http2.ConfigureTransports(transport); err == nil {
+		h2.ReadIdleTimeout = 30 * time.Second
+		h2.PingTimeout = 15 * time.Second
+		h2.WriteByteTimeout = 30 * time.Second
+		logger.Info("HTTP/2 探活已启用 - ReadIdleTimeout: 30s, PingTimeout: 15s")
+	} else {
+		logger.Warn("HTTP/2 配置失败，将使用默认行为: %v", err)
+	}
 
 	// 保存基础 Transport（无代理配置）
 	baseTransport := transport.Clone()
